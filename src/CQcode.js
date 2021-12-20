@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import logError from './logError';
 
 class CQCode {
   /**
@@ -92,17 +93,40 @@ class CQCode {
   /**
    * CQ码 图片
    * @param {string} file 本地文件路径或URL
-   * @param {string} type 类型
+   * @param {'flash'|'show'} [type] 类型
    */
-  static img(file, type = null) {
+  static img(file, type) {
     return new CQCode('image', { file, type }).toString();
+  }
+
+  /**
+   * CQ码 图片 下载再发送
+   * @param {string} url 本地文件路径或URL
+   * @param {'flash'|'show'} [type] 类型
+   */
+  static async imgPreDl(url, type) {
+    try {
+      const ret = await global.bot('download_file', { url });
+      let file = _.get(ret, 'data.file');
+      if (file) {
+        if (!file.startsWith('/')) file = `/${file}`;
+        return new CQCode('image', { file: `file://${file}`, type }).toString();
+      }
+      logError(`${global.getTime()} [error] download file api`);
+      logError(ret);
+    } catch (e) {
+      logError(`${global.getTime()} [error] download file api`);
+      logError(e);
+    }
+    return new CQCode('image', { file: url, type }).toString();
   }
 
   /**
    * CQ码 Base64 图片
    * @param {string} base64 图片 Base64
+   * @param {'flash'|'show'} [type] 类型
    */
-  static img64(base64, type = null) {
+  static img64(base64, type) {
     return new CQCode('image', { file: `base64://${base64}`, type }).toString();
   }
 
